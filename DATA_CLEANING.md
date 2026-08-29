@@ -1,6 +1,7 @@
-# Data Cleaning
+# Data Inspection and Cleaning
 
-## Inspect Dataset
+## Initial Data Inspection
+### Inspect Dataset
 
 ```sql
 SELECT *
@@ -21,7 +22,7 @@ ORDER BY Name;
 
 Results showed 534 duplicated groups.
 ***
-## Finding Null Values
+### Finding Null Values
 
 ```sql
 SELECT COUNT(*) AS number_of_null
@@ -45,7 +46,7 @@ WHERE Name IS NULL
 
 There were 0 rows with NULL values, which means that every column in every row has a value.
 ***
-## Checking for admission and discharge date inconsistencies.
+### Checking for admission and discharge date inconsistencies.
 
 ```sql
 SELECT COUNT(*) as date_inconsist
@@ -55,7 +56,7 @@ WHERE Discharge_Date < Date_of_Admission;
 
 There were 0 rows where discharge dates were earlier than admission dates.
 ***
-## Checking for impossible values in age column.
+### Checking for impossible values in age column.
 
 ```sql
 SELECT COUNT(*) as impossible_age
@@ -65,7 +66,7 @@ WHERE Age NOT BETWEEN 0 AND 122;
 
 There were 0 rows where age is less than 0 or greater than 122.
 ***
-## Checking for negative or unusual values in billing amount column.
+### Checking for negative or unusual values in billing amount column.
 
 First, find the maximum amount.
 
@@ -84,7 +85,7 @@ FROM healthcare_dataset;
 
 <img width="189" height="51" alt="image" src="https://github.com/user-attachments/assets/9c152d55-4a5a-43b2-9d2e-67102947e1b1" />
 
-This reveals that Billing_Amount column contains at least one negative value. Therefore, will need to find how many rows have a negative billing amount.
+This reveals that Billing_Amount column contains at least one negative value. Therefore, find how many rows have a negative billing amount.
 
 ```sql
 SELECT COUNT(*) as neg_billing
@@ -95,8 +96,11 @@ WHERE Billing_Amount < 0;
 <img width="154" height="50" alt="image" src="https://github.com/user-attachments/assets/4e1d4cc5-65d9-49f6-98d1-801ea807aaf7" />
 
 There are 108 rows with a negative number in Billing_Amount.
+
+***Notes: Numbers in Billing_Amount have more decimal precision than expected for currency, which is usually 2 decimal places.***
+
 ***
-## Checking for unusual values in Room_Number.
+### Checking for unusual values in Room_Number.
 
 Finding the lowest and highest room numbers.
 ```sql
@@ -111,3 +115,51 @@ FROM healthcare_dataset;
 <img width="224" height="112" alt="image" src="https://github.com/user-attachments/assets/14d133b1-b4fc-4f7b-b264-9d5a3e78532f" />
 
 Room numbers range from 101 to 500 with no negative values or obvious extreme outliers.
+***
+## Data Cleaning (without altering original dataset)
+
+### Assigning a row number to each set of duplicate records to label duplicates.
+
+```sql
+SELECT *,
+	ROW_NUMBER() OVER(PARTITION BY Name, Age, Gender, Blood_Type, Medical_Condition, Date_of_Admission, Doctor, Hospital, Insurance_Provider, Billing_Amount, Room_Number, Admission_Type, Discharge_Date, Medication, Test_Results ORDER BY Name) AS Dup_No
+FROM healthcare_dataset
+```
+***
+### Creating a CTE called 'CleanData' to identify duplicate rows.
+
+```sql
+WITH CleanData AS (
+	SELECT *,
+		ROW_NUMBER() OVER(PARTITION BY Name, Age, Gender, Blood_Type, Medical_Condition, Date_of_Admission, Doctor, Hospital, Insurance_Provider, Billing_Amount, Room_Number, Admission_Type, Discharge_Date, Medication, Test_Results ORDER BY Name) AS Dup_No
+	FROM healthcare_dataset
+)
+```
+***
+### Creating a view from CleanData.
+
+```sql
+CREATE OR ALTER VIEW vw_SyntheticHealthcareData AS
+WITH CleanData AS (
+	SELECT *,
+		ROW_NUMBER() OVER(PARTITION BY Name, Age, Gender, Blood_Type, Medical_Condition, Date_of_Admission, Doctor, Hospital, Insurance_Provider, Billing_Amount, Room_Number, Admission_Type, Discharge_Date, Medication, Test_Results ORDER BY Name) AS Dup_No
+	FROM healthcare_dataset
+)
+```
+***
+### Selecting non-duplicate data and format Billing_Amount to 2 decimals.
+
+```sql
+SELECT Name, Age, Gender, Blood_Type, Medical_Condition, Date_of_Admission, Doctor, Hospital, Insurance_Provider, ROUND(Billing_Amount, 2) AS Billing_Amount, Room_Number, Admission_Type, Discharge_Date, Medication, Test_Results
+FROM CleanData
+WHERE Dup_No = 1;
+```
+***
+### Validating view before analysis.
+
+```sql
+SELECT *
+FROM vw_SyntheticHealthcareData;
+```
+
+Results show that 54,966 unique rows remain. 534 duplicate rows were removed and Billing_Amount was formatted to 2 decimal places to match currency formats.
