@@ -103,7 +103,7 @@ Finding the lowest and highest room numbers.
 SELECT MIN(Room_Number) AS min_room_number
 FROM healthcare_dataset;
 ```
-```
+```sql
 SELECT MAX(Room_Number) AS max_room_number
 FROM healthcare_dataset;
 ```
