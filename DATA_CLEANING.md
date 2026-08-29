@@ -8,7 +8,7 @@ FROM healthcare_dataset;
 ```
 
 Manually checking dataset for NULL values, duplicate rows, or inconsistent data. Total rows: 55,500
-
+***
 ## Finding Duplicate Rows
 
 ```sql
@@ -20,7 +20,7 @@ ORDER BY Name;
 ```
 
 Results showed 534 duplicated groups.
-
+***
 ## Finding Null Values
 
 ```sql
@@ -44,8 +44,7 @@ WHERE Name IS NULL
 ```
 
 There were 0 rows with NULL values, which means that every column in every row has a value.
-
-
+***
 ## Checking for admission and discharge date inconsistencies.
 
 ```sql
@@ -55,7 +54,7 @@ WHERE Discharge_Date < Date_of_Admission;
 ```
 
 There were 0 rows where discharge dates were earlier than admission dates.
-
+***
 ## Checking for impossible values in age column.
 
 ```sql
@@ -65,7 +64,7 @@ WHERE Age NOT BETWEEN 0 AND 122;
 ```
 
 There were 0 rows where age is less than 0 or greater than 122.
-
+***
 ## Checking for negative or unusual values in billing amount column.
 
 First, find the maximum amount.
@@ -96,7 +95,7 @@ WHERE Billing_Amount < 0;
 <img width="154" height="50" alt="image" src="https://github.com/user-attachments/assets/4e1d4cc5-65d9-49f6-98d1-801ea807aaf7" />
 
 There are 108 rows with a negative number in Billing_Amount.
-
+***
 ## Checking for unusual values in Room_Number.
 
 Finding the lowest and highest room numbers.
